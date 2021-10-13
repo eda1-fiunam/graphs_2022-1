@@ -29,6 +29,10 @@
 // Esta versión no borra elementos
 // Esta versión no modifica los datos originales
 
+#ifndef PRINT_LEVEL
+#define PRINT_LEVEL 0
+#endif  
+
 #ifndef DBG_HELP
 #define DBG_HELP 0
 #endif  
@@ -192,8 +196,8 @@ size_t Vertex_GetDataIndex( Vertex* v )
  */
 typedef enum 
 { 
-   UNDIRECTED, ///< grafo no dirigido
-   DIRECTED    ///< grafo dirigido (digraph)
+   eGraphType_UNDIRECTED, ///< grafo no dirigido
+   eGraphType_DIRECTED    ///< grafo dirigido (digraph)
 } eGraphType; 
 
 /**
@@ -305,8 +309,8 @@ void Graph_Delete( Graph** g )
  */
 void Graph_Print( Graph* g, int depth )
 {
-   for( size_t i = 0; i < g->len; ++i ){
-
+   for( size_t i = 0; i < g->len; ++i )
+   {
       Vertex* vertex = &g->vertices[ i ];
       // para simplificar la notación. 
 
@@ -317,25 +321,24 @@ void Graph_Print( Graph* g, int depth )
       printf( vertex->neighbors ? "Has neighbors\n" : "Has no neighbors\n" );
 
       // LEVEL 1:
-      if( depth > 0 ){
-
-         for( Node* node = vertex->neighbors; node != NULL; node = node->next ){
-
+      if( depth > 0 )
+      {
+         for( Node* node = vertex->neighbors; node != NULL; node = node->next )
+         {
             DBG_PRINT( "Print():(Node:%p, (*Node.index:%ld, *Node.next:%p))\n", node, node->index, node->next );
             
             printf( " %d ", g->vertices[ node->index ].map.key );
 
             // LEVEL 2:
-            if( depth > 1 ){
+            if( depth > 1 )
+            {
                printf( "(Node:%p) ", node );
             }
 
             printf( "->" );
-         }
-         if( vertex->neighbors ) printf( " Nil\n" );
+         } if( vertex->neighbors ) printf( " Nil\n" );
       }
-   }
-   printf( "\n" );
+   } printf( "\n" );
 }
 
 /**
@@ -437,7 +440,7 @@ bool Graph_AddEdge( Graph* g, int start, int finish )
    insert( &g->vertices[ start_idx ], finish_idx );
    // insertamos la arista start-finish
 
-   if( g->type == UNDIRECTED ) insert( &g->vertices[ finish_idx ], start_idx );
+   if( g->type == eGraphType_UNDIRECTED ) insert( &g->vertices[ finish_idx ], start_idx );
    // si el grafo no es dirigido, entonces insertamos la arista finish-start
 
    return true;
@@ -462,6 +465,14 @@ Node* Graph_GetNeighborsByKey( Graph* g, int key )
    return NULL;
 }
 
+/**
+ * @brief Devuelve el vértice correspondiente a la llave especificada.
+ *
+ * @param g     El grafo.
+ * @param index El índice a la tabla de vértices.
+ *
+ * @return El vértice correspondiente a la llave especificada.
+ */
 Vertex* Graph_GetVertexByKey( Graph* g, int key )
 {
    assert( g );
@@ -474,6 +485,14 @@ Vertex* Graph_GetVertexByKey( Graph* g, int key )
    return NULL;
 }
 
+/**
+ * @brief Devuelve el vértice correspondiente al índice especificado.
+ *
+ * @param g     El grafo.
+ * @param index El índice a la tabla de vértices.
+ *
+ * @return El vértice correspondiente al índice especificado.
+ */
 Vertex* Graph_GetVertexByIndex( Graph* g, size_t index )
 {
    assert( g );
@@ -513,26 +532,30 @@ size_t Graph_GetLen( Graph* g )
    return g->len;
 }
 
-
-
 //----------------------------------------------------------------------
 // Driver program 
 //----------------------------------------------------------------------
-#define MAX_DATA 10
+#define MAX_DATA 6
+
+/*
+100 - 200 - 600
+ |  \     \
+300 - 400 - 500
+*/
 
 int main()
 {
-   // Inicializa la tabla de datos. <1,A>, <2,B>, ...
+   // Inicializa la tabla de datos. <100,A>, <200,B>, ...
    Data data[ MAX_DATA ];
    char name = 'A';
    for( size_t i = 1; i <= MAX_DATA; ++i, ++name) {
-      data[i-1].val = i * 1;
+      data[i-1].val = i * 100;
       data[i-1].name = name;
    }
 
    Graph* grafo = Graph_New( 
-         MAX_DATA,   // cantidad máxima de nodos
-         DIRECTED ); // será un grafo dirigido
+         MAX_DATA,                // cantidad máxima de nodos
+         eGraphType_UNDIRECTED ); // será un grafo no dirigido
 
    // crea los vértices:
    for( size_t i = 0; i < MAX_DATA; ++i )
@@ -545,19 +568,17 @@ int main()
    }
 
    // crea las conexiones entre vértices:
-   Graph_AddEdge( grafo, 1, 2 );
-   Graph_AddEdge( grafo, 2, 6 );
-   Graph_AddEdge( grafo, 4, 5 );
-   Graph_AddEdge( grafo, 5, 1 );
-   Graph_AddEdge( grafo, 5, 8 );
-   Graph_AddEdge( grafo, 6, 7 );
-   Graph_AddEdge( grafo, 6, 9 );
-   Graph_AddEdge( grafo, 7, 3 );
-   Graph_AddEdge( grafo, 7, 10 );
-   Graph_AddEdge( grafo, 8, 4 );
-   Graph_AddEdge( grafo, 9, 8 );
+   Graph_AddEdge( grafo, 100, 200 );
+   Graph_AddEdge( grafo, 100, 300 );
+   Graph_AddEdge( grafo, 100, 400 );
+   Graph_AddEdge( grafo, 200, 500 );
+   Graph_AddEdge( grafo, 200, 600 );
+   Graph_AddEdge( grafo, 300, 400 );
 
-   Graph_Print( grafo, 2 );
+   Graph_Print( grafo, PRINT_LEVEL );
+   // imprime el grafo completo
+
+
 
    Graph_Delete( &grafo );
    assert( grafo == NULL );
